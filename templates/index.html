@@ -1,0 +1,835 @@
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #F4F2FF;
+            color: #1E293B;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #312E81, #6366F1);
+            color: white;
+            padding: 30px 6%;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #E0E7FF;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 25px;
+        }
+
+        .section-title {
+            color: #312E81;
+            margin: 30px 0 18px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 15px rgba(49, 46, 129, 0.06);
+            min-width: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .stat-label {
+            color: #64748B;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 27px;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #475569;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            color: #1E293B;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #A5B4FC;
+            border-color: #6366F1;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 9px;
+            background: #4F46E5;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #3730A3;
+        }
+
+        .result-box {
+            border-radius: 12px;
+            background: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .result-box h3 {
+            margin-top: 0;
+            color: #312E81;
+        }
+
+        .risk-bar {
+            height: 12px;
+            background: #E2E8F0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .risk-fill {
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .muted {
+            color: #64748B;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            color: #312E81;
+            font-size: 17px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        .model-graphs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .model-graphs .chart-container {
+            height: 150px;
+        }
+
+        .model-graphs .card {
+            border-top: 4px solid #6366F1;
+        }
+
+        .model-graphs .card:nth-child(2) {
+            border-top-color: #0EA5E9;
+        }
+
+        .model-graphs .card:nth-child(3) {
+            border-top-color: #10B981;
+        }
+
+        .model-graphs .card:nth-child(4) {
+            border-top-color: #F59E0B;
+        }
+
+        .model-graphs .card:nth-child(5) {
+            border-top-color: #A855F7;
+        }
+
+        .customer-details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            padding: 12px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .detail-item strong {
+            display: block;
+            color: #64748B;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .detail-item span {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #64748B;
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .chart-grid,
+            .model-graphs {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <h1>Customer Churn Prediction</h1>
+    <p>Machine Learning · Customer Analytics</p>
+    <p>Understand customer risk, predict churn, and take action to improve retention.</p>
+</header>
+
+<main class="container">
+
+    <!-- CUSTOMER RETENTION STATISTICS -->
+    <h2 class="section-title">Customer Retention Statistics</h2>
+
+    {% if analytics %}
+    <section class="stats-grid">
+        <div class="card">
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value">{{ analytics.total_customers }}</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-label">Customers Retained</div>
+            <div class="stat-value">{{ analytics.retained_customers }}</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-label">Customers Churned</div>
+            <div class="stat-value">{{ analytics.churned_customers }}</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-label">Retention Rate</div>
+            <div class="stat-value">{{ analytics.retention_rate }}%</div>
+        </div>
+    </section>
+    {% else %}
+    <div class="card">
+        <h3>Analytics temporarily unavailable</h3>
+        <p class="muted">
+            {{ analytics_error or "Please check your dataset path and CSV column names." }}
+        </p>
+        <p class="muted">
+            Expected dataset: dataset/Telco--customer-churn.csv
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- CUSTOMER PREDICTION -->
+    <h2 class="section-title">Individual Customer Prediction</h2>
+
+    <section class="main-grid">
+
+        <div class="card">
+            <h3>Enter Customer Details</h3>
+            <p class="muted">
+                Complete the fields below to predict whether a customer may leave.
+            </p>
+
+            <form action="/predict" method="POST">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" required>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="SeniorCitizen">Senior Citizen</label>
+                        <select id="SeniorCitizen" name="SeniorCitizen" required>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Partner">Partner</label>
+                        <select id="Partner" name="Partner" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Dependents">Dependents</label>
+                        <select id="Dependents" name="Dependents" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tenure">Tenure (months)</label>
+                        <input id="tenure" name="tenure" type="number"
+                               min="0" max="100" step="1" value="12" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="PhoneService">Phone Service</label>
+                        <select id="PhoneService" name="PhoneService" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="MultipleLines">Multiple Lines</label>
+                        <select id="MultipleLines" name="MultipleLines" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No phone service">No phone service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="InternetService">Internet Service</label>
+                        <select id="InternetService" name="InternetService" required>
+                            <option value="DSL">DSL</option>
+                            <option value="Fiber optic">Fiber optic</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="OnlineSecurity">Online Security</label>
+                        <select id="OnlineSecurity" name="OnlineSecurity" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="OnlineBackup">Online Backup</label>
+                        <select id="OnlineBackup" name="OnlineBackup" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="DeviceProtection">Device Protection</label>
+                        <select id="DeviceProtection" name="DeviceProtection" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="TechSupport">Tech Support</label>
+                        <select id="TechSupport" name="TechSupport" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="StreamingTV">Streaming TV</label>
+                        <select id="StreamingTV" name="StreamingTV" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="StreamingMovies">Streaming Movies</label>
+                        <select id="StreamingMovies" name="StreamingMovies" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Contract">Contract</label>
+                        <select id="Contract" name="Contract" required>
+                            <option value="Month-to-month">Month-to-month</option>
+                            <option value="One year">One year</option>
+                            <option value="Two year">Two year</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="PaperlessBilling">Paperless Billing</label>
+                        <select id="PaperlessBilling" name="PaperlessBilling" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="PaymentMethod">Payment Method</label>
+                        <select id="PaymentMethod" name="PaymentMethod" required>
+                            <option value="Electronic check">Electronic check</option>
+                            <option value="Mailed check">Mailed check</option>
+                            <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                            <option value="Credit card (automatic)">Credit card (automatic)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="MonthlyCharges">Monthly Charges</label>
+                        <input id="MonthlyCharges" name="MonthlyCharges"
+                               type="number" min="0" step="0.01"
+                               value="70.00" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="TotalCharges">Total Charges</label>
+                        <input id="TotalCharges" name="TotalCharges"
+                               type="number" min="0" step="0.01"
+                               value="840.00" required>
+                    </div>
+
+                    <div class="full-width">
+                        <button type="submit">Predict Customer Churn</button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+
+        <!-- PREDICTION RESULT -->
+        <div class="card">
+            <h3>Prediction Result</h3>
+
+            {% if prediction %}
+                <div class="result-box">
+                    <h3>{{ prediction }}</h3>
+
+                    {% if churn_probability is defined and churn_probability is not none %}
+                        <p>
+                            <strong>Churn Probability:</strong>
+                            {{ churn_probability }}%
+                        </p>
+
+                        <div class="risk-bar">
+                            <div class="risk-fill"
+                                 style="width: {{ risk_width }}%; background: {{ risk_color }};">
+                            </div>
+                        </div>
+
+                        <p>
+                            <strong>Risk Level:</strong>
+                            <span style="color: {{ risk_color }};">
+                                {{ risk_level }}
+                            </span>
+                        </p>
+
+                        <p><strong>Recommended Action</strong></p>
+                        <p>{{ risk_action }}</p>
+                    {% endif %}
+                </div>
+
+                {% if customer %}
+                <h3>Customer Details Summary</h3>
+                <div class="customer-details">
+                    <div class="detail-item">
+                        <strong>Tenure</strong>
+                        <span>{{ customer.tenure }} months</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>Monthly Charges</strong>
+                        <span>{{ customer.MonthlyCharges }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>Contract</strong>
+                        <span>{{ customer.Contract }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>Internet Service</strong>
+                        <span>{{ customer.InternetService }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="result-box">
+                    <h3>Ready to Analyze</h3>
+                    <p>
+                        Enter the customer information and click
+                        <strong>Predict Customer Churn</strong> to see
+                        the prediction, risk level, and retention suggestion.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+    </section>
+
+    <!-- CHURN DISTRIBUTION -->
+    <h2 class="section-title">Customer Churn Analysis</h2>
+
+    {% if analytics %}
+    <section class="chart-grid">
+
+        <div class="card chart-card">
+            <h3>Churn Distribution</h3>
+            <p class="muted">Compare customers who stayed and customers who left.</p>
+            <div class="chart-container">
+                <canvas id="churnChart"></canvas>
+            </div>
+            <p class="muted">
+                Churn rate: {{ analytics.churn_rate }}%
+            </p>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Customer Retention</h3>
+            <p class="muted">Percentage of customers retained versus churned.</p>
+            <div class="chart-container">
+                <canvas id="retentionChart"></canvas>
+            </div>
+            <p class="muted">
+                Retention rate: {{ analytics.retention_rate }}%
+            </p>
+        </div>
+
+    </section>
+
+    <!-- FIVE INDIVIDUAL MODEL GRAPHS -->
+    <h2 class="section-title">Machine Learning Model Performance</h2>
+    <p class="muted">
+        Each graph shows the test accuracy of one model, calculated using
+        the same train-test split. Results depend on your dataset and training setup.
+    </p>
+
+    <section class="model-graphs">
+
+        <div class="card chart-card">
+            <h3>Decision Tree</h3>
+            <div class="chart-container">
+                <canvas id="decisionTreeChart"></canvas>
+            </div>
+            <p class="muted" id="decisionTreeScore"></p>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Random Forest</h3>
+            <div class="chart-container">
+                <canvas id="randomForestChart"></canvas>
+            </div>
+            <p class="muted" id="randomForestScore"></p>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Logistic Regression</h3>
+            <div class="chart-container">
+                <canvas id="logisticRegressionChart"></canvas>
+            </div>
+            <p class="muted" id="logisticRegressionScore"></p>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Support Vector Machine (SVM)</h3>
+            <div class="chart-container">
+                <canvas id="svmChart"></canvas>
+            </div>
+            <p class="muted" id="svmScore"></p>
+        </div>
+
+        <div class="card chart-card">
+            <h3>K-Nearest Neighbors (KNN)</h3>
+            <div class="chart-container">
+                <canvas id="knnChart"></canvas>
+            </div>
+            <p class="muted" id="knnScore"></p>
+        </div>
+
+    </section>
+    {% endif %}
+
+    {% if analytics %}
+    <script>
+        const churnLabels = {{ analytics.churn_labels | tojson }};
+        const churnValues = {{ analytics.churn_values | tojson }};
+        const modelNames = {{ analytics.model_names | tojson }};
+        const modelAccuracies = {{ analytics.model_accuracies | tojson }};
+
+        // Churn distribution chart
+        new Chart(document.getElementById("churnChart"), {
+            type: "doughnut",
+            data: {
+                labels: churnLabels,
+                datasets: [{
+                    data: churnValues,
+                    backgroundColor: ["#6366F1", "#F43F5E"],
+                    borderWidth: 2,
+                    borderColor: "#FFFFFF"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+        // Customer retention chart
+        new Chart(document.getElementById("retentionChart"), {
+            type: "pie",
+            data: {
+                labels: ["Retained", "Churned"],
+                datasets: [{
+                    data: churnValues,
+                    backgroundColor: ["#10B981", "#F59E0B"],
+                    borderWidth: 2,
+                    borderColor: "#FFFFFF"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+        // Individual model accuracy charts
+        const modelCharts = [
+            {
+                name: "Decision Tree",
+                id: "decisionTreeChart",
+                scoreId: "decisionTreeScore",
+                color: "#6366F1"
+            },
+            {
+                name: "Random Forest",
+                id: "randomForestChart",
+                scoreId: "randomForestScore",
+                color: "#0EA5E9"
+            },
+            {
+                name: "Logistic Regression",
+                id: "logisticRegressionChart",
+                scoreId: "logisticRegressionScore",
+                color: "#10B981"
+            },
+            {
+                name: "SVM",
+                id: "svmChart",
+                scoreId: "svmScore",
+                color: "#F59E0B"
+            },
+            {
+                name: "KNN",
+                id: "knnChart",
+                scoreId: "knnScore",
+                color: "#A855F7"
+            }
+        ];
+
+        modelCharts.forEach(function(model) {
+            const index = modelNames.indexOf(model.name);
+            const canvas = document.getElementById(model.id);
+            const scoreElement = document.getElementById(model.scoreId);
+
+            if (index !== -1 && canvas) {
+                const accuracy = Number(modelAccuracies[index]);
+
+                new Chart(canvas, {
+                    type: "bar",
+                    data: {
+                        labels: [model.name],
+                        datasets: [{
+                            label: "Accuracy (%)",
+                            data: [accuracy],
+                            backgroundColor: model.color,
+                            borderRadius: 8,
+                            barThickness: 38
+                        }]
+                    },
+                    options: {
+                        indexAxis: "y",
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                min: 0,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: "Accuracy (%)"
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + "%";
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return "Accuracy: " + context.raw + "%";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (scoreElement) {
+                    scoreElement.textContent = "Test accuracy: " + accuracy + "%";
+                }
+            } else if (scoreElement) {
+                scoreElement.textContent = "Accuracy data is unavailable for this model.";
+            }
+        });
+    </script>
+    {% endif %}
+
+</main>
+
+<footer class="footer">
+    Customer Churn Prediction · Machine Learning Analytics Dashboard
+</footer>
+
+</body>
+</html>
+```
